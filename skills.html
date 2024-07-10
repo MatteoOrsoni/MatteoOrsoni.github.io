@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Matteo Orsoni - Skills</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+                <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html#top">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html#about">About me</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="skills.html">Skills</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="publications.html">Latest Publications</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="collaborations.html">Collaborations</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="awards.html">Awards</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="teching.html">Teaching</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html#bottom">Contacts</a>
+                        </li>
+                    </ul>
+            </div>
+        </div>
+    </nav>
+
+    <title>Skills Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ECF2FF;
+            margin: 0;
+            padding: 0;
+        }
+        .links line {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        .nodes circle {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        .node-labels {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .subnode-labels {
+            font-size: 12px;
+        }
+        .star-rating {
+            font-size: 12px;
+        }
+        .yellow-stars {
+            fill: gold;
+        }
+        .grey-stars {
+            fill: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <svg width="1400" height="1300" style="margin-top: 20px;"></svg>
+    <script>
+        const skills = [
+            { id: "HTML", group: 1, rating: 3, subskills: ["Accessibility", "Forms"] },
+            { id: "CSS", group: 1, rating: 3, subskills: ["Flexbox", "Grid"] },
+            { id: "JavaScript", group: 1, rating: 1, subskills: [] },
+            { id: "Python", group: 2, rating: 4, subskills: ["Machine Learning", "Artificial Intelligence", "TensorFlow"] },
+            { id: "R", group: 2, rating: 4, subskills: ["Modeling", "Data Visualization", "Bayesian Cognitive Modeling",
+                "Psychometrics"] },
+            { id: "Statistical Testing", group: 2, rating: 5, subskills: ["ANOVA", "t test", "LMM", "Multivariate Regression", 
+                "GLMM" ]},
+            { id: "Communication", group: 3, rating: 5, subskills: ["Public Speaking", "Technical Writing", "Team Collaboration"] },  
+            { id: "Problem Solving", group: 3, rating: 4, subskills: ["Adaptability", "Problem Identification", "Research",
+                "Idea Generation", "Analysis", "Decision Making", "Implementation"] },
+            { id: "Critical Thinking", group: 3, rating: 4, subskills: ["Analysis", "Evaluation", "Inference", "Explanation",
+                "Self Regulation", "Open Mindedness" ] },
+            { id: "Teaching", group: 4, rating: 4, subskills: ["Management", "Communication", "Instructional Skills",
+                "Interpersonal Skills", "Adaptability"]},
+            { id: "Neuropsychological Testing", group: 5, rating: 5, subskills: ["Clinical Knowledge", "Assessment", "Diagnosis", "Evaluation"]}
+        ];
+
+        const links = [];
+        const nodes = [];
+
+        skills.forEach(skill => {
+            nodes.push({ id: skill.id, group: skill.group, rating: skill.rating, isMainSkill: true });
+            skill.subskills.forEach(subskill => {
+                nodes.push({ id: `${skill.id}-${subskill}`, group: skill.group, isMainSkill: false });
+                links.push({ source: skill.id, target: `${skill.id}-${subskill}`, isMainLink: false });
+            });
+        });
+
+        skills.forEach((skill, i) => {
+            skills.slice(i + 1).forEach(otherSkill => {
+                links.push({ source: skill.id, target: otherSkill.id, isMainLink: true });
+            });
+        });
+
+        const svg = d3.select("svg"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
+
+        const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+        // Add title to SVG
+        const title = svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", 50)
+            .attr("text-anchor", "middle")
+            .style("font-size", "32px")
+            .style("fill", "#333")
+            .text("Skills");
+
+        function forceCluster() {
+            const strength = 0.2;
+            let nodes;
+
+            function force(alpha) {
+                const centroids = d3.rollup(nodes.filter(d => d.isMainSkill), v => ({
+                    x: d3.mean(v, d => d.x),
+                    y: d3.mean(v, d => d.y)
+                }), d => d.group);
+
+                nodes.forEach(d => {
+                    if (d.isMainSkill) {
+                        const centroid = centroids.get(d.group);
+                        d.vx -= (d.x - centroid.x) * strength * alpha;
+                        d.vy -= (d.y - centroid.y) * strength * alpha;
+                    }
+                });
+            }
+
+            force.initialize = _ => nodes = _;
+
+            return force;
+        }
+
+        // Adjust initial positions of nodes
+        nodes.forEach(node => {
+            node.y -= 50;
+        });
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.isMainLink ? 300 : 100))
+            .force("charge", d3.forceManyBody().strength(d => d.isMainSkill ? -3000 : -1000))
+            .force("center", d3.forceCenter(width / 2, height / 2 - 50))
+            .force("x", d3.forceX(width / 2).strength(0.1))
+            .force("y", d3.forceY(height / 2 - 50).strength(0.1))
+            .force("collision", d3.forceCollide().radius(d => d.isMainSkill ? 70 : 40))
+            .force("cluster", forceCluster());
+
+        const link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(links)
+            .enter().append("line")
+            .attr("stroke-width", d => d.isMainLink ? 1 : 2);
+
+        const node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(nodes)
+            .enter().append("circle")
+            .attr("r", d => d.isMainSkill ? (20 + d.rating * 5) : 15)
+            .attr("fill", d => color(d.group))
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        const label = svg.append("g")
+            .selectAll("text")
+            .data(nodes)
+            .enter().append("text")
+            .attr("class", d => d.isMainSkill ? "node-labels" : "subnode-labels")
+            .text(d => d.isMainSkill ? d.id : d.id.split('-')[1])
+            .attr("text-anchor", "middle")
+            .attr("dy", d => d.isMainSkill ? 5 : 3);
+
+        const starRating = svg.append("g")
+            .attr("class", "star-rating")
+            .selectAll("text")
+            .data(nodes.filter(d => d.isMainSkill))
+            .enter().append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", 25)
+            .html(d => {
+                const yellowStars = "★".repeat(d.rating);
+                const greyStars = "★".repeat(5 - d.rating);
+                return `<tspan class="yellow-stars">${yellowStars}</tspan><tspan class="grey-stars">${greyStars}</tspan>`;
+            });
+
+        simulation
+            .nodes(nodes)
+            .on("tick", ticked);
+
+        simulation.force("link")
+            .links(links);
+
+        function ticked() {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+
+            label
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+
+            starRating
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html>

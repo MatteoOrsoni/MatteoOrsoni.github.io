@@ -44,7 +44,7 @@ h3 {
 
 #cloud_1 {
     position: absolute;
-    top: 20vh;
+    top: 20vw;
     left: 10vw;
     width: 15vw;
     max-width: 150px;
@@ -52,7 +52,7 @@ h3 {
 
 #cloud_2 {
     position: absolute;
-    top: 10vh;
+    top: 10vw;
     right: 2vw;
     width: 15vw;
     max-width: 150px;
@@ -63,7 +63,7 @@ h3 {
     width: 10vw;
     max-width: 100px;
     left: 10vw;
-    bottom: 2vh;
+    bottom: 2vw;
 }
 
 .mountain {
